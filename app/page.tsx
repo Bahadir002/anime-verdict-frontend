@@ -1,9 +1,10 @@
 // app/page.tsx
 "use client";
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link"; // Link eklendi
+import Link from "next/link";
 import Navbar from "../components/Navbar";
 import QuizCard from "../components/QuizCard";
+import Footer from "../components/Footer";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -11,26 +12,32 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const sliderRef = useRef<HTMLDivElement>(null);
   
-  // Quizleri tutacağımız State (Artık boş başlıyor, veriyi çekeceğiz)
+  // Quizleri tutacağımız State
   const [quizzes, setQuizzes] = useState<any[]>([]);
 
   useEffect(() => {
     setMounted(true);
     
-    // BURASI WORDPRESS'E BAĞLANACAĞIMIZ YER
-    // Şimdilik sadece tek bir quizi (JJK) "veritabanından gelmiş gibi" ekliyoruz.
-    // İleride burası: fetch('https://seninsiten.com/wp-json/wp/v2/quizzes') olacak.
+    // WordPress API'sine bağlanıp tüm quizleri çeken fonksiyon
     const fetchQuizzes = async () => {
-      const wpData = [
-        { 
-          id: 1, 
-          title: "ARE YOU A JJK EXPERT OR JUST ANOTHER POTENTIAL MAN?", 
-          excerpt: "Think you know Jujutsu Kaisen better than average twitter user? Prove it!", 
-          image: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjRteWJmY3h1aTJ5ZGZyZW0xdG4zbm83c2p4NW8yM3N6M2t0Z3YwayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/LHy9iUZDBxjEwNexJm/giphy.gif" 
-        }
-        // WordPress'ten yeni quiz eklediğinde otomatik olarak buraya 2, 3, 4 diye düşecek.
-      ];
-      setQuizzes(wpData);
+      try {
+        // Canlıya alındığında önbellekte takılmaması için no-store eklendi
+        const response = await fetch('https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes', { cache: 'no-store' });
+        const data = await response.json();
+        
+        // WordPress'ten gelen JSON verisini QuizCard'ın anlayacağı formata sokuyoruz
+        const formattedQuizzes = data.map((item: any) => ({
+          id: item.id,
+          title: item.title.rendered,
+          excerpt: item.acf?.soru_1?.soru_metni || "Are you ready for this quiz?", 
+          // Önce kapak_gorseli_url alanına bakar, bulamazsa soru_1'in görselini alır, o da yoksa default resmi basar.
+          image: item.acf?.kapak_gorseli_url || item.acf?.soru_1?.gorsel_url || "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjRteWJmY3h1aTJ5ZGZyZW0xdG4zbm83c2p4NW8yM3N6M2t0Z3YwayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/LHy9iUZDBxjEwNexJm/giphy.gif"
+        }));
+
+        setQuizzes(formattedQuizzes);
+      } catch (error) {
+        console.error("Quizler çekilirken hata oluştu:", error);
+      }
     };
 
     fetchQuizzes();
@@ -130,6 +137,7 @@ export default function Home() {
           </section>
 
         </main>
+        <Footer />
       </div>
     </div>
   );
