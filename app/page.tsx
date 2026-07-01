@@ -21,8 +21,7 @@ export default function Home() {
     // WordPress API'sine bağlanıp tüm quizleri çeken fonksiyon
     const fetchQuizzes = async () => {
       try {
-        // Canlıya alındığında önbellekte takılmaması için no-store eklendi
-        const response = await fetch('https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes', { cache: 'no-store' });
+        const response = await fetch('https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes');
         const data = await response.json();
         
         // WordPress'ten gelen JSON verisini QuizCard'ın anlayacağı formata sokuyoruz
@@ -30,7 +29,7 @@ export default function Home() {
           id: item.id,
           title: item.title.rendered,
           excerpt: item.acf?.soru_1?.soru_metni || "Are you ready for this quiz?", 
-          // Önce kapak_gorseli_url alanına bakar, bulamazsa soru_1'in görselini alır, o da yoksa default resmi basar.
+          // BURASI GÜNCELLENDİ: Önce kapak_gorseli_url alanına bakar, bulamazsa soru_1'in görselini alır, o da yoksa default resmi basar.
           image: item.acf?.kapak_gorseli_url || item.acf?.soru_1?.gorsel_url || "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjRteWJmY3h1aTJ5ZGZyZW0xdG4zbm83c2p4NW8yM3N6M2t0Z3YwayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/LHy9iUZDBxjEwNexJm/giphy.gif"
         }));
 
