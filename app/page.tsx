@@ -22,7 +22,7 @@ export default function Home() {
     const fetchQuizzes = async () => {
       try {
         // BURASI GÜNCELLENDİ: API linkine acf_format=standard eklendi
-        const response = await fetch('https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes?acf_format=standard');
+        const response = await fetch('https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes?acf_format=standard', { cache: 'no-store' });
         const data = await response.json();
         
         // WordPress'ten gelen JSON verisini QuizCard'ın anlayacağı formata sokuyoruz

@@ -30,7 +30,7 @@ export default function QuizPage() {
     const fetchSingleQuiz = async () => {
       try {
         // BURASI GÜNCELLENDİ: API linkine acf_format=standard eklendi
-        const response = await fetch(`https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes/${quizId}?acf_format=standard`);
+        const response = await fetch(`https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes/${quizId}?acf_format=standard`, { cache: 'no-store' });
         const data = await response.json();
         const acf = data.acf || {};
         const parsedQuestions = [];
