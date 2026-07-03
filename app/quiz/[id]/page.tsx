@@ -1,3 +1,4 @@
+// app/quiz/[id]/page.tsx
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -28,26 +29,30 @@ export default function QuizPage() {
 
     const fetchSingleQuiz = async () => {
       try {
-        const response = await fetch(`https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes/${quizId}`);
+        // BURASI GÜNCELLENDİ: API linkine acf_format=standard eklendi
+        const response = await fetch(`https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes/${quizId}?acf_format=standard`);
         const data = await response.json();
         const acf = data.acf || {};
         const parsedQuestions = [];
 
+        // Yeni İngilizce mimariye göre 10 soruyu çekiyoruz
         for (let i = 1; i <= 10; i++) {
-          const qKey = `soru_${i}`;
-          if (acf[qKey] && acf[qKey].soru_metni) {
+          const qKey = `question_${i}`;
+          if (acf[qKey] && acf[qKey].question_text) {
             const qData = acf[qKey];
-            const rawOptions = qData.secenekler ? qData.secenekler.split(",") : [];
-            const formattedOptions = rawOptions.map((opt: string, index: number) => ({
-              id: String.fromCharCode(65 + index),
-              text: opt.includes(":") ? opt.split(":")[1].trim() : opt.trim(),
-              isCorrect: index === 0
-            }));
+            
+            // Seçenekleri oluşturuyoruz
+            const formattedOptions = [
+              { id: "A", text: qData.option_a, isCorrect: qData.correct_answer === "A" },
+              { id: "B", text: qData.option_b, isCorrect: qData.correct_answer === "B" },
+              { id: "C", text: qData.option_c, isCorrect: qData.correct_answer === "C" },
+              { id: "D", text: qData.option_d, isCorrect: qData.correct_answer === "D" }
+            ].filter(opt => opt.text); // Boş seçenekleri filtreler
 
             parsedQuestions.push({
               id: i,
-              question: qData.soru_metni,
-              image: qData.gorsel_url || "",
+              question: qData.question_text,
+              image: qData.question_gif || "",
               options: formattedOptions
             });
           }
@@ -56,13 +61,13 @@ export default function QuizPage() {
         const formattedData = {
           id: data.id,
           title: data.title?.rendered || "Anime Quiz",
-          description: "Are you ready to test your knowledge?",
-          coverGif: acf.kapak_gorsel_url || "https://media.giphy.com/media/LHy9iUZDBxjEwNexJm/giphy.gif",
+          description: acf.description || "Are you ready to test your knowledge?",
+          coverGif: acf.cover_image || acf.question_1?.question_gif || "https://media.giphy.com/media/LHy9iUZDBxjEwNexJm/giphy.gif",
           questions: parsedQuestions,
-          // Dinamik sonuç verileri
+          // Dinamik sonuç verileri (İstersen ACF'ye results_text ve results_gif ekleyebilirsin)
           resultData: {
-            text: acf.sonuc_yazisi || "Special Grade!|Grade 1!|Potential Man...",
-            gif: acf.sonuc_gif_url || "https://media.giphy.com/media/CkzBceXz8H68dDtvD1/giphy.gif"
+            text: acf.results_text || "Special Grade!|Grade 1!|Potential Man...",
+            gif: acf.results_gif || "https://media.giphy.com/media/CkzBceXz8H68dDtvD1/giphy.gif"
           }
         };
 
@@ -109,7 +114,6 @@ export default function QuizPage() {
   const currentQuestion = quizData.questions[currentQuestionIndex];
   const progressPercentage = (currentQuestionIndex / quizData.questions.length) * 100;
   
-  // Sonuç metinlerini ayır (WordPress'e girerken aralarına | koy)
   const sonuclar = quizData.resultData.text.split("|");
   const finalMesaj = score === quizData.questions.length ? sonuclar[0] : score >= quizData.questions.length / 2 ? sonuclar[1] : sonuclar[2];
 
