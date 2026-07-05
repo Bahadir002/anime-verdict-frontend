@@ -1,7 +1,5 @@
-// app/quiz/[id]/page.tsx
 "use client";
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
@@ -29,52 +27,47 @@ export default function QuizPage() {
 
     const fetchSingleQuiz = async () => {
       try {
-        // BURASI GÜNCELLENDİ: API linkine acf_format=standard eklendi
-        const response = await fetch(`https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes/${quizId}?acf_format=standard`, { cache: 'no-store' });
+        const response = await fetch(
+          `https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes/${quizId}?acf_format=standard`,
+          { cache: "no-store" }
+        );
         const data = await response.json();
         const acf = data.acf || {};
         const parsedQuestions = [];
 
-        // Yeni İngilizce mimariye göre 10 soruyu çekiyoruz
         for (let i = 1; i <= 10; i++) {
           const qKey = `question_${i}`;
           if (acf[qKey] && acf[qKey].question_text) {
             const qData = acf[qKey];
-            
-            // Seçenekleri oluşturuyoruz
             const formattedOptions = [
               { id: "A", text: qData.option_a, isCorrect: qData.correct_answer === "A" },
               { id: "B", text: qData.option_b, isCorrect: qData.correct_answer === "B" },
               { id: "C", text: qData.option_c, isCorrect: qData.correct_answer === "C" },
-              { id: "D", text: qData.option_d, isCorrect: qData.correct_answer === "D" }
-            ].filter(opt => opt.text); // Boş seçenekleri filtreler
+              { id: "D", text: qData.option_d, isCorrect: qData.correct_answer === "D" },
+            ].filter((opt) => opt.text);
 
             parsedQuestions.push({
               id: i,
               question: qData.question_text,
               image: qData.question_gif || "",
-              options: formattedOptions
+              options: formattedOptions,
             });
           }
         }
 
-        const formattedData = {
+        setQuizData({
           id: data.id,
           title: data.title?.rendered || "Anime Quiz",
-          description: acf.description || "Are you ready to test your knowledge?",
           coverGif: acf.cover_image || acf.question_1?.question_gif || "https://media.giphy.com/media/LHy9iUZDBxjEwNexJm/giphy.gif",
           questions: parsedQuestions,
-          // Dinamik sonuç verileri (İstersen ACF'ye results_text ve results_gif ekleyebilirsin)
           resultData: {
             text: acf.results_text || "Special Grade!|Grade 1!|Potential Man...",
-            gif: acf.results_gif || "https://media.giphy.com/media/CkzBceXz8H68dDtvD1/giphy.gif"
-          }
-        };
-
-        setQuizData(formattedData);
+            gif: acf.results_gif || "https://media.giphy.com/media/CkzBceXz8H68dDtvD1/giphy.gif",
+          },
+        });
         setIsLoading(false);
       } catch (error) {
-        console.error("Hata:", error);
+        console.error("Quiz yükleme hatası:", error);
         setIsLoading(false);
       }
     };
@@ -112,8 +105,6 @@ export default function QuizPage() {
   if (!quizData) return <div className="min-h-screen flex items-center justify-center">Quiz not found!</div>;
 
   const currentQuestion = quizData.questions[currentQuestionIndex];
-  const progressPercentage = (currentQuestionIndex / quizData.questions.length) * 100;
-  
   const sonuclar = quizData.resultData.text.split("|");
   const finalMesaj = score === quizData.questions.length ? sonuclar[0] : score >= quizData.questions.length / 2 ? sonuclar[1] : sonuclar[2];
 
@@ -138,52 +129,37 @@ export default function QuizPage() {
             </div>
           ) : (
             <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl shadow-lg">
-              <div className="mb-4">Question {currentQuestionIndex + 1} / {quizData.questions.length}</div>
+              <div className="mb-4 text-gray-500">Question {currentQuestionIndex + 1} / {quizData.questions.length}</div>
               {currentQuestion.image && (
                 <img 
                   src={currentQuestion.image} 
-                  alt="Question GIF" 
+                  alt="Question" 
                   className="w-full h-64 object-cover rounded-2xl mb-6" 
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  onError={(e) => (e.currentTarget.style.display = 'none')}
                 />
               )}
               <h2 className="text-2xl font-bold mb-8">{currentQuestion.question}</h2>
               <div className="space-y-4">
                 {currentQuestion.options.map((option: any) => {
-                // Seçilme durumuna göre butonun stilini belirliyoruz
-                let buttonClass = "w-full p-5 text-left rounded-xl border-2 transition-all duration-300 font-medium ";
-                
-                if (!isAnswerChecked) {
-                  // Henüz cevap verilmediyse: Standart tasarım
-                  buttonClass += "border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 bg-white dark:bg-[#1a1a1a]";
-                } else {
-                  // Cevap verildiyse: Renklendirme mantığı
-                  if (option.isCorrect) {
-                    // Doğru cevap: Yeşil
-                    buttonClass += "bg-green-100 border-green-500 text-green-900 dark:bg-green-900/30 dark:border-green-500 dark:text-green-300 cursor-default";
-                  } else if (selectedOption === option.id) {
-                    // Kullanıcının seçtiği yanlış cevap: Kırmızı
-                    buttonClass += "bg-red-100 border-red-500 text-red-900 dark:bg-red-900/30 dark:border-red-500 dark:text-red-300 cursor-default";
+                  let buttonClass = "w-full p-5 text-left rounded-xl border-2 transition-all duration-300 font-medium ";
+                  if (!isAnswerChecked) {
+                    buttonClass += "border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 bg-white dark:bg-[#1a1a1a]";
                   } else {
-                    // Diğer yanlış şıklar: Soluk
-                    buttonClass += "border-gray-100 dark:border-gray-800 opacity-50 cursor-default bg-gray-50 dark:bg-[#111]";
+                    buttonClass += option.isCorrect 
+                      ? "bg-green-100 border-green-500 text-green-900 dark:bg-green-900/30 dark:border-green-500 dark:text-green-300"
+                      : selectedOption === option.id 
+                      ? "bg-red-100 border-red-500 text-red-900 dark:bg-red-900/30 dark:border-red-500 dark:text-red-300"
+                      : "opacity-50 cursor-default bg-gray-50 dark:bg-[#111] border-gray-100 dark:border-gray-800";
                   }
-                }
-
-                return (
-                  <button 
-                    key={option.id} 
-                    onClick={() => handleOptionClick(option.id, option.isCorrect)} 
-                    disabled={isAnswerChecked} 
-                    className={buttonClass}
-                  >
-                    {option.text}
-                  </button>
-                );
-              })}
+                  return (
+                    <button key={option.id} onClick={() => handleOptionClick(option.id, option.isCorrect)} disabled={isAnswerChecked} className={buttonClass}>
+                      {option.text}
+                    </button>
+                  );
+                })}
               </div>
               {isAnswerChecked && (
-                <button onClick={handleNextQuestion} className="mt-8 px-8 py-4 bg-blue-600 text-white rounded-xl font-bold">
+                <button onClick={handleNextQuestion} className="mt-8 px-8 py-4 bg-blue-600 text-white rounded-xl font-bold w-full">
                   {currentQuestionIndex + 1 === quizData.questions.length ? "See Results" : "Next Question"}
                 </button>
               )}
