@@ -11,8 +11,11 @@ export default function Footer() {
           © {new Date().getFullYear()} <span className="font-bold text-blue-600 dark:text-blue-400">AnimeVerdict</span>. All rights reserved.
         </div>
 
-        {/* Kurumsal Linkler (Terms ve Privacy) */}
-        <div className="flex gap-6">
+        {/* Kurumsal Linkler (About, Terms, Privacy ve Contact) */}
+        <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+          <Link href="/about" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors underline decoration-dotted">
+            About Us
+          </Link>
           <Link href="/terms" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors underline decoration-dotted">
             Terms of Service
           </Link>
