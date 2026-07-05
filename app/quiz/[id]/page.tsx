@@ -25,12 +25,18 @@ export default function QuizPage() {
     setMounted(true);
     if (document.documentElement.classList.contains("dark")) setDarkMode(true);
 
+    const getImageUrl = async (id: any) => {
+      if (!id) return "";
+      try {
+        const res = await fetch(`https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/media/${id}`);
+        const data = await res.json();
+        return data.source_url || "";
+      } catch { return ""; }
+    };
+
     const fetchSingleQuiz = async () => {
       try {
-        const response = await fetch(
-          `https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes/${quizId}?acf_format=standard`,
-          { cache: "no-store" }
-        );
+        const response = await fetch(`https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes/${quizId}?acf_format=standard`, { cache: "no-store" });
         const data = await response.json();
         const acf = data.acf || {};
         const parsedQuestions = [];
@@ -39,35 +45,40 @@ export default function QuizPage() {
           const qKey = `question_${i}`;
           if (acf[qKey] && acf[qKey].question_text) {
             const qData = acf[qKey];
-            const formattedOptions = [
-              { id: "A", text: qData.option_a, isCorrect: qData.correct_answer === "A" },
-              { id: "B", text: qData.option_b, isCorrect: qData.correct_answer === "B" },
-              { id: "C", text: qData.option_c, isCorrect: qData.correct_answer === "C" },
-              { id: "D", text: qData.option_d, isCorrect: qData.correct_answer === "D" },
-            ].filter((opt) => opt.text);
+            
+            // Eğer gelen veri sayıysa (ID), linke çevir
+            const gifUrl = typeof qData.question_gif === 'number' ? await getImageUrl(qData.question_gif) : qData.question_gif;
 
             parsedQuestions.push({
               id: i,
               question: qData.question_text,
-              image: qData.question_gif || "", // WordPress'ten gelen alan ismi: question_gif
-              options: formattedOptions,
+              image: gifUrl,
+              options: [
+                { id: "A", text: qData.option_a, isCorrect: qData.correct_answer === "A" },
+                { id: "B", text: qData.option_b, isCorrect: qData.correct_answer === "B" },
+                { id: "C", text: qData.option_c, isCorrect: qData.correct_answer === "C" },
+                { id: "D", text: qData.option_d, isCorrect: qData.correct_answer === "D" }
+              ].filter(opt => opt.text)
             });
           }
         }
 
+        // Kapak ve Sonuç GIF'lerini de ID ise URL'ye çevir
+        const coverUrl = typeof acf.cover_image === 'number' ? await getImageUrl(acf.cover_image) : acf.cover_image;
+        const resultUrl = typeof acf.results_gif === 'number' ? await getImageUrl(acf.results_gif) : acf.results_gif;
+
         setQuizData({
           id: data.id,
           title: data.title?.rendered || "Anime Quiz",
-          coverGif: acf.cover_image || acf.question_1?.question_gif || "https://media.giphy.com/media/LHy9iUZDBxjEwNexJm/giphy.gif",
+          coverGif: coverUrl || "https://media.giphy.com/media/LHy9iUZDBxjEwNexJm/giphy.gif",
           questions: parsedQuestions,
           resultData: {
             text: acf.results_text || "Special Grade!|Grade 1!|Potential Man...",
-            gif: acf.results_gif || "https://media.giphy.com/media/CkzBceXz8H68dDtvD1/giphy.gif",
-          },
+            gif: resultUrl || "https://media.giphy.com/media/CkzBceXz8H68dDtvD1/giphy.gif"
+          }
         });
         setIsLoading(false);
       } catch (error) {
-        console.error("Quiz yükleme hatası:", error);
         setIsLoading(false);
       }
     };
@@ -75,6 +86,7 @@ export default function QuizPage() {
     if (quizId) fetchSingleQuiz();
   }, [quizId]);
 
+  // ... (handleOptionClick, handleNextQuestion, restartQuiz fonksiyonları aynı kalacak)
   const handleOptionClick = (optionId: string, isCorrect: boolean) => {
     if (isAnswerChecked) return;
     setSelectedOption(optionId);
@@ -102,7 +114,6 @@ export default function QuizPage() {
   };
 
   if (!mounted || isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  if (!quizData) return <div className="min-h-screen flex items-center justify-center">Quiz not found!</div>;
 
   const currentQuestion = quizData.questions[currentQuestionIndex];
   const sonuclar = quizData.resultData.text.split("|");
@@ -130,34 +141,18 @@ export default function QuizPage() {
           ) : (
             <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl shadow-lg">
               <div className="mb-4 text-gray-500">Question {currentQuestionIndex + 1} / {quizData.questions.length}</div>
-              
-              {/* DEBUG SATIRI - Sorunu anlamak için ekledik */}
-              <div className="bg-yellow-100 p-2 mb-2 text-xs text-black">
-                Debug: Resim Linki = "{currentQuestion.image}"
-              </div>
-
               {currentQuestion.image && (
-                <img 
-                  src={`${currentQuestion.image}?t=${new Date().getTime()}`} 
-                  alt="Question" 
-                  className="w-full h-64 object-cover rounded-2xl mb-6" 
-                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                />
+                <img src={currentQuestion.image} alt="Question" className="w-full h-64 object-cover rounded-2xl mb-6" />
               )}
-              
               <h2 className="text-2xl font-bold mb-8">{currentQuestion.question}</h2>
               <div className="space-y-4">
                 {currentQuestion.options.map((option: any) => {
                   let buttonClass = "w-full p-5 text-left rounded-xl border-2 transition-all duration-300 font-medium ";
-                  if (!isAnswerChecked) {
-                    buttonClass += "border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 bg-white dark:bg-[#1a1a1a]";
-                  } else {
-                    buttonClass += option.isCorrect 
-                      ? "bg-green-100 border-green-500 text-green-900 dark:bg-green-900/30 dark:border-green-500 dark:text-green-300"
-                      : selectedOption === option.id 
-                      ? "bg-red-100 border-red-500 text-red-900 dark:bg-red-900/30 dark:border-red-500 dark:text-red-300"
-                      : "opacity-50 cursor-default bg-gray-50 dark:bg-[#111] border-gray-100 dark:border-gray-800";
-                  }
+                  buttonClass += !isAnswerChecked 
+                    ? "border-gray-200 dark:border-gray-700 hover:border-blue-500 bg-white dark:bg-[#1a1a1a]" 
+                    : option.isCorrect ? "bg-green-100 border-green-500 text-green-900" 
+                    : selectedOption === option.id ? "bg-red-100 border-red-500 text-red-900" 
+                    : "opacity-50 bg-gray-50 dark:bg-[#111] border-gray-100";
                   return (
                     <button key={option.id} onClick={() => handleOptionClick(option.id, option.isCorrect)} disabled={isAnswerChecked} className={buttonClass}>
                       {option.text}
