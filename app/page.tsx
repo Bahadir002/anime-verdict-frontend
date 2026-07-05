@@ -21,18 +21,17 @@ export default function Home() {
     // WordPress API'sine bağlanıp tüm quizleri çeken fonksiyon
     const fetchQuizzes = async () => {
       try {
-        // BURASI GÜNCELLENDİ: API linkine acf_format=standard eklendi
-        const response = await fetch('https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes?acf_format=standard', { cache: 'no-store' });
+        // BURASI GÜNCELLENDİ: Linkin sonuna &_embed eklendi
+        const response = await fetch('https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes?acf_format=standard&_embed', { cache: 'no-store' });
         const data = await response.json();
         
         // WordPress'ten gelen JSON verisini QuizCard'ın anlayacağı formata sokuyoruz
         const formattedQuizzes = data.map((item: any) => ({
           id: item.id,
           title: item.title.rendered,
-          // BURASI GÜNCELLENDİ: Yeni İngilizce yapıya göre "description" alanını çekiyoruz
           excerpt: item.acf?.description || "Are you ready for this quiz?", 
-          // BURASI GÜNCELLENDİ: Cover görseli bulamazsa question_1'in GIF'ini alır
-          image: item.acf?.cover_image || item.acf?.question_1?.question_gif || "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjRteWJmY3h1aTJ5ZGZyZW0xdG4zbm83c2p4NW8yM3N6M2t0Z3YwayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/LHy9iUZDBxjEwNexJm/giphy.gif"
+          // BURASI GÜNCELLENDİ: Artık önce "Featured Image" kısmına bakıyor! (GIF veya Resim fark etmez)
+          image: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || item.acf?.question_1?.question_gif || "https://media.giphy.com/media/LHy9iUZDBxjEwNexJm/giphy.gif"
         }));
 
         setQuizzes(formattedQuizzes);
