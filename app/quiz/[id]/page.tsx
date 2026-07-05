@@ -36,7 +36,10 @@ export default function QuizPage() {
 
     const fetchSingleQuiz = async () => {
       try {
-        const response = await fetch(`https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes/${quizId}?acf_format=standard`, { cache: "no-store" });
+        const response = await fetch(
+          `https://lightgrey-otter-854797.hostingersite.com/wp-json/wp/v2/quizzes/${quizId}?acf_format=standard`,
+          { cache: "no-store" }
+        );
         const data = await response.json();
         const acf = data.acf || {};
         const parsedQuestions = [];
@@ -46,8 +49,9 @@ export default function QuizPage() {
           if (acf[qKey] && acf[qKey].question_text) {
             const qData = acf[qKey];
             
-            // Eğer gelen veri sayıysa (ID), linke çevir
-            const gifUrl = typeof qData.question_gif === 'number' ? await getImageUrl(qData.question_gif) : qData.question_gif;
+            const gifUrl = typeof qData.question_gif === 'number' 
+              ? await getImageUrl(qData.question_gif) 
+              : qData.question_gif;
 
             parsedQuestions.push({
               id: i,
@@ -63,14 +67,13 @@ export default function QuizPage() {
           }
         }
 
-        // Kapak ve Sonuç GIF'lerini de ID ise URL'ye çevir
         const coverUrl = typeof acf.cover_image === 'number' ? await getImageUrl(acf.cover_image) : acf.cover_image;
         const resultUrl = typeof acf.results_gif === 'number' ? await getImageUrl(acf.results_gif) : acf.results_gif;
 
         setQuizData({
           id: data.id,
           title: data.title?.rendered || "Anime Quiz",
-          coverGif: coverUrl || "https://media.giphy.com/media/LHy9iUZDBxjEwNexJm/giphy.gif",
+          coverGif: coverUrl || (parsedQuestions[0]?.image) || "https://media.giphy.com/media/LHy9iUZDBxjEwNexJm/giphy.gif",
           questions: parsedQuestions,
           resultData: {
             text: acf.results_text || "Special Grade!|Grade 1!|Potential Man...",
@@ -86,7 +89,6 @@ export default function QuizPage() {
     if (quizId) fetchSingleQuiz();
   }, [quizId]);
 
-  // ... (handleOptionClick, handleNextQuestion, restartQuiz fonksiyonları aynı kalacak)
   const handleOptionClick = (optionId: string, isCorrect: boolean) => {
     if (isAnswerChecked) return;
     setSelectedOption(optionId);
@@ -114,6 +116,7 @@ export default function QuizPage() {
   };
 
   if (!mounted || isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (!quizData) return <div className="min-h-screen flex items-center justify-center">Quiz not found!</div>;
 
   const currentQuestion = quizData.questions[currentQuestionIndex];
   const sonuclar = quizData.resultData.text.split("|");
@@ -141,18 +144,29 @@ export default function QuizPage() {
           ) : (
             <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl shadow-lg">
               <div className="mb-4 text-gray-500">Question {currentQuestionIndex + 1} / {quizData.questions.length}</div>
+              
               {currentQuestion.image && (
-                <img src={currentQuestion.image} alt="Question" className="w-full h-64 object-cover rounded-2xl mb-6" />
+                <img 
+                  src={currentQuestion.image} 
+                  alt="Question" 
+                  className="w-full h-64 object-cover rounded-2xl mb-6" 
+                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                />
               )}
+              
               <h2 className="text-2xl font-bold mb-8">{currentQuestion.question}</h2>
               <div className="space-y-4">
                 {currentQuestion.options.map((option: any) => {
                   let buttonClass = "w-full p-5 text-left rounded-xl border-2 transition-all duration-300 font-medium ";
-                  buttonClass += !isAnswerChecked 
-                    ? "border-gray-200 dark:border-gray-700 hover:border-blue-500 bg-white dark:bg-[#1a1a1a]" 
-                    : option.isCorrect ? "bg-green-100 border-green-500 text-green-900" 
-                    : selectedOption === option.id ? "bg-red-100 border-red-500 text-red-900" 
-                    : "opacity-50 bg-gray-50 dark:bg-[#111] border-gray-100";
+                  if (!isAnswerChecked) {
+                    buttonClass += "border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 bg-white dark:bg-[#1a1a1a]";
+                  } else {
+                    buttonClass += option.isCorrect 
+                      ? "bg-green-100 border-green-500 text-green-900 dark:bg-green-900/30 dark:border-green-500 dark:text-green-300"
+                      : selectedOption === option.id 
+                      ? "bg-red-100 border-red-500 text-red-900 dark:bg-red-900/30 dark:border-red-500 dark:text-red-300"
+                      : "opacity-50 cursor-default bg-gray-50 dark:bg-[#111] border-gray-100 dark:border-gray-800";
+                  }
                   return (
                     <button key={option.id} onClick={() => handleOptionClick(option.id, option.isCorrect)} disabled={isAnswerChecked} className={buttonClass}>
                       {option.text}
