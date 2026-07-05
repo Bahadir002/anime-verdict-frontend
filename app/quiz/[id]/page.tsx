@@ -142,11 +142,38 @@ export default function QuizPage() {
               <img src={currentQuestion.image} className="w-full h-64 object-cover rounded-2xl mb-6" />
               <h2 className="text-2xl font-bold mb-8">{currentQuestion.question}</h2>
               <div className="space-y-4">
-                {currentQuestion.options.map((option: any) => (
-                  <button key={option.id} onClick={() => handleOptionClick(option.id, option.isCorrect)} disabled={isAnswerChecked} className="w-full p-5 text-left rounded-xl border-2 hover:border-blue-500">
+                {currentQuestion.options.map((option: any) => {
+                // Seçilme durumuna göre butonun stilini belirliyoruz
+                let buttonClass = "w-full p-5 text-left rounded-xl border-2 transition-all duration-300 font-medium ";
+                
+                if (!isAnswerChecked) {
+                  // Henüz cevap verilmediyse: Standart tasarım
+                  buttonClass += "border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 bg-white dark:bg-[#1a1a1a]";
+                } else {
+                  // Cevap verildiyse: Renklendirme mantığı
+                  if (option.isCorrect) {
+                    // Doğru cevap: Yeşil
+                    buttonClass += "bg-green-100 border-green-500 text-green-900 dark:bg-green-900/30 dark:border-green-500 dark:text-green-300 cursor-default";
+                  } else if (selectedOption === option.id) {
+                    // Kullanıcının seçtiği yanlış cevap: Kırmızı
+                    buttonClass += "bg-red-100 border-red-500 text-red-900 dark:bg-red-900/30 dark:border-red-500 dark:text-red-300 cursor-default";
+                  } else {
+                    // Diğer yanlış şıklar: Soluk
+                    buttonClass += "border-gray-100 dark:border-gray-800 opacity-50 cursor-default bg-gray-50 dark:bg-[#111]";
+                  }
+                }
+
+                return (
+                  <button 
+                    key={option.id} 
+                    onClick={() => handleOptionClick(option.id, option.isCorrect)} 
+                    disabled={isAnswerChecked} 
+                    className={buttonClass}
+                  >
                     {option.text}
                   </button>
-                ))}
+                );
+              })}
               </div>
               {isAnswerChecked && (
                 <button onClick={handleNextQuestion} className="mt-8 px-8 py-4 bg-blue-600 text-white rounded-xl font-bold">
