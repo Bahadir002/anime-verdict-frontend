@@ -139,7 +139,14 @@ export default function QuizPage() {
           ) : (
             <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl shadow-lg">
               <div className="mb-4">Question {currentQuestionIndex + 1} / {quizData.questions.length}</div>
-              <img src={currentQuestion.image} className="w-full h-64 object-cover rounded-2xl mb-6" />
+              {currentQuestion.image && (
+                <img 
+                  src={currentQuestion.image} 
+                  alt="Question GIF" 
+                  className="w-full h-64 object-cover rounded-2xl mb-6" 
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              )}
               <h2 className="text-2xl font-bold mb-8">{currentQuestion.question}</h2>
               <div className="space-y-4">
                 {currentQuestion.options.map((option: any) => {
