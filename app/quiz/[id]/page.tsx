@@ -49,7 +49,7 @@ export default function QuizPage() {
             parsedQuestions.push({
               id: i,
               question: qData.question_text,
-              image: qData.question_gif || "",
+              image: qData.question_gif || "", // WordPress'ten gelen alan ismi: question_gif
               options: formattedOptions,
             });
           }
@@ -130,14 +130,21 @@ export default function QuizPage() {
           ) : (
             <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl shadow-lg">
               <div className="mb-4 text-gray-500">Question {currentQuestionIndex + 1} / {quizData.questions.length}</div>
+              
+              {/* DEBUG SATIRI - Sorunu anlamak için ekledik */}
+              <div className="bg-yellow-100 p-2 mb-2 text-xs text-black">
+                Debug: Resim Linki = "{currentQuestion.image}"
+              </div>
+
               {currentQuestion.image && (
                 <img 
-                  src={currentQuestion.image} 
+                  src={`${currentQuestion.image}?t=${new Date().getTime()}`} 
                   alt="Question" 
                   className="w-full h-64 object-cover rounded-2xl mb-6" 
                   onError={(e) => (e.currentTarget.style.display = 'none')}
                 />
               )}
+              
               <h2 className="text-2xl font-bold mb-8">{currentQuestion.question}</h2>
               <div className="space-y-4">
                 {currentQuestion.options.map((option: any) => {
