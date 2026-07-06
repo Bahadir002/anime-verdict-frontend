@@ -66,7 +66,6 @@ export default function QuizPage() {
           }
         }
 
-        // Yeni 4'lü GIF sisteminin verilerini çekiyoruz
         const coverUrl = typeof acf.cover_image === 'number' ? await getImageUrl(acf.cover_image) : acf.cover_image;
         const winUrl = typeof acf.win_gif === 'number' ? await getImageUrl(acf.win_gif) : acf.win_gif;
         const midHighUrl = typeof acf.mid_high_gif === 'number' ? await getImageUrl(acf.mid_high_gif) : acf.mid_high_gif;
@@ -79,7 +78,7 @@ export default function QuizPage() {
           coverGif: coverUrl || parsedQuestions[0]?.image || "https://media.giphy.com/media/LHy9iUZDBxjEwNexJm/giphy.gif",
           questions: parsedQuestions,
           resultData: {
-            text: acf.results_text || "Kusursuz!|Harika!|Daha iyi olabilirdi...|Anime izlemeye hemen başlamalısın!",
+            text: acf.results_text || "Flawless!|Great job!|Not bad...|You need to watch more anime!",
             winGif: winUrl || "https://media.giphy.com/media/CkzBceXz8H68dDtvD1/giphy.gif",
             midHighGif: midHighUrl || "https://media.giphy.com/media/LHy9iUZDBxjEwNexJm/giphy.gif", 
             midLowGif: midLowUrl || "https://media.giphy.com/media/11TkuRl1Ff32ak/giphy.gif", 
@@ -126,7 +125,6 @@ export default function QuizPage() {
 
   const currentQuestion = quizData.questions[currentQuestionIndex];
   
-  // 4 Kademeli Skor Hesaplaması
   const totalQuestions = quizData.questions.length;
   const scoreRatio = score / totalQuestions;
   
@@ -134,17 +132,17 @@ export default function QuizPage() {
   let finalMesaj = "";
   let finalGif = "";
 
-  if (scoreRatio === 1) { // %100 Başarı
-    finalMesaj = sonuclar[0] || "Mükemmel!";
+  if (scoreRatio === 1) { 
+    finalMesaj = sonuclar[0] || "Flawless!";
     finalGif = quizData.resultData.winGif;
-  } else if (scoreRatio >= 0.7) { // %70 - %90 Arası
-    finalMesaj = sonuclar[1] || "Harika İş!";
+  } else if (scoreRatio >= 0.7) { 
+    finalMesaj = sonuclar[1] || "Great job!";
     finalGif = quizData.resultData.midHighGif;
-  } else if (scoreRatio >= 0.4) { // %40 - %60 Arası
-    finalMesaj = sonuclar[2] || "Fena Değil...";
+  } else if (scoreRatio >= 0.4) { 
+    finalMesaj = sonuclar[2] || "Not bad...";
     finalGif = quizData.resultData.midLowGif;
-  } else { // %0 - %30 Arası
-    finalMesaj = sonuclar[3] || "Tam bir hayal kırıklığı...";
+  } else { 
+    finalMesaj = sonuclar[3] || "You need to watch more anime!";
     finalGif = quizData.resultData.lowGif;
   }
 
@@ -161,7 +159,7 @@ export default function QuizPage() {
             </div>
           ) : showResult ? (
             <div className="text-center bg-white dark:bg-[#151515] p-8 rounded-3xl shadow-2xl">
-              <h2 className="text-4xl font-black mb-6">Quiz Tamamlandı!</h2>
+              <h2 className="text-4xl font-black mb-6">Quiz Completed!</h2>
               
               <img 
                 src={finalGif} 
@@ -170,9 +168,9 @@ export default function QuizPage() {
                 onError={(e) => (e.currentTarget.style.display = 'none')}
               />
               
-              <p className="text-2xl font-bold mb-4">Skor: {score} / {quizData.questions.length}</p>
+              <p className="text-2xl font-bold mb-4">Score: {score} / {quizData.questions.length}</p>
               <p className="text-lg italic mb-10 text-gray-600 dark:text-gray-300">"{finalMesaj}"</p>
-              <button onClick={restartQuiz} className="px-8 py-4 bg-gray-200 dark:bg-gray-800 rounded-xl font-bold">Tekrar Dene</button>
+              <button onClick={restartQuiz} className="px-8 py-4 bg-gray-200 dark:bg-gray-800 rounded-xl font-bold">Retake Quiz</button>
             </div>
           ) : (
             <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl shadow-lg">
