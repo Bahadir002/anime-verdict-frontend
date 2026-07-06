@@ -133,15 +133,31 @@ export default function QuizPage() {
               <img src={quizData.coverGif} alt="Cover" className="w-full h-64 object-cover rounded-2xl mb-8" />
               <button onClick={() => setIsStarted(true)} className="px-12 py-5 bg-blue-600 text-white rounded-xl font-bold text-xl">Start Quiz</button>
             </div>
-          ) : showResult ? (
-            <div className="text-center bg-white dark:bg-[#151515] p-8 rounded-3xl shadow-2xl">
-              <h2 className="text-4xl font-black mb-6">Quiz Completed!</h2>
-              <img src={quizData.resultData.gif} className="w-full h-64 object-cover rounded-2xl mb-6" />
-              <p className="text-2xl font-bold mb-4">Score: {score} / {quizData.questions.length}</p>
-              <p className="text-lg italic mb-10">"{finalMesaj}"</p>
-              <button onClick={restartQuiz} className="px-8 py-4 bg-gray-200 rounded-xl font-bold">Retake</button>
-            </div>
-          ) : (
+            ) : showResult ? (
+              <div className="text-center bg-white dark:bg-[#151515] p-8 rounded-3xl shadow-2xl">
+                <h2 className="text-4xl font-black mb-6">Quiz Tamamlandı!</h2>
+                
+                {/* DİNAMİK GIF: WordPress'ten gelen sonucu gösterir */}
+                <img 
+                  src={quizData.resultData.gif} 
+                  alt="Result" 
+                  className="w-full h-64 object-cover rounded-2xl mb-6" 
+                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                />
+                
+                <p className="text-2xl font-bold mb-4">Skor: {score} / {quizData.questions.length}</p>
+                
+                {/* DİNAMİK MESAJ: WordPress'teki metinleri skora göre gösterir */}
+                <p className="text-lg italic mb-10 text-gray-600 dark:text-gray-300">"{finalMesaj}"</p>
+                
+                <button 
+                  onClick={restartQuiz} 
+                  className="px-8 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                >
+                  Tekrar Dene
+                </button>
+              </div>
+            ) : (
             <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl shadow-lg">
               <div className="mb-4 text-gray-500">Question {currentQuestionIndex + 1} / {quizData.questions.length}</div>
               
