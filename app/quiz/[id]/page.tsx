@@ -48,7 +48,6 @@ export default function QuizPage() {
           const qKey = `question_${i}`;
           if (acf[qKey] && acf[qKey].question_text) {
             const qData = acf[qKey];
-            
             const gifUrl = typeof qData.question_gif === 'number' 
               ? await getImageUrl(qData.question_gif) 
               : qData.question_gif;
@@ -67,17 +66,24 @@ export default function QuizPage() {
           }
         }
 
+        // Yeni 4'lü GIF sisteminin verilerini çekiyoruz
         const coverUrl = typeof acf.cover_image === 'number' ? await getImageUrl(acf.cover_image) : acf.cover_image;
-        const resultUrl = typeof acf.results_gif === 'number' ? await getImageUrl(acf.results_gif) : acf.results_gif;
+        const winUrl = typeof acf.win_gif === 'number' ? await getImageUrl(acf.win_gif) : acf.win_gif;
+        const midHighUrl = typeof acf.mid_high_gif === 'number' ? await getImageUrl(acf.mid_high_gif) : acf.mid_high_gif;
+        const midLowUrl = typeof acf.mid_low_gif === 'number' ? await getImageUrl(acf.mid_low_gif) : acf.mid_low_gif;
+        const lowUrl = typeof acf.low_gif === 'number' ? await getImageUrl(acf.low_gif) : acf.low_gif;
 
         setQuizData({
           id: data.id,
           title: data.title?.rendered || "Anime Quiz",
-          coverGif: coverUrl || (parsedQuestions[0]?.image) || "https://media.giphy.com/media/LHy9iUZDBxjEwNexJm/giphy.gif",
+          coverGif: coverUrl || parsedQuestions[0]?.image || "https://media.giphy.com/media/LHy9iUZDBxjEwNexJm/giphy.gif",
           questions: parsedQuestions,
           resultData: {
-            text: acf.results_text || "Special Grade!|Grade 1!|Potential Man...",
-            gif: resultUrl || "https://media.giphy.com/media/CkzBceXz8H68dDtvD1/giphy.gif"
+            text: acf.results_text || "Kusursuz!|Harika!|Daha iyi olabilirdi...|Anime izlemeye hemen başlamalısın!",
+            winGif: winUrl || "https://media.giphy.com/media/CkzBceXz8H68dDtvD1/giphy.gif",
+            midHighGif: midHighUrl || "https://media.giphy.com/media/LHy9iUZDBxjEwNexJm/giphy.gif", 
+            midLowGif: midLowUrl || "https://media.giphy.com/media/11TkuRl1Ff32ak/giphy.gif", 
+            lowGif: lowUrl || "https://media.giphy.com/media/8YxomP0BEnEqQ/giphy.gif"
           }
         });
         setIsLoading(false);
@@ -119,8 +125,28 @@ export default function QuizPage() {
   if (!quizData) return <div className="min-h-screen flex items-center justify-center">Quiz not found!</div>;
 
   const currentQuestion = quizData.questions[currentQuestionIndex];
+  
+  // 4 Kademeli Skor Hesaplaması
+  const totalQuestions = quizData.questions.length;
+  const scoreRatio = score / totalQuestions;
+  
   const sonuclar = quizData.resultData.text.split("|");
-  const finalMesaj = score === quizData.questions.length ? sonuclar[0] : score >= quizData.questions.length / 2 ? sonuclar[1] : sonuclar[2];
+  let finalMesaj = "";
+  let finalGif = "";
+
+  if (scoreRatio === 1) { // %100 Başarı
+    finalMesaj = sonuclar[0] || "Mükemmel!";
+    finalGif = quizData.resultData.winGif;
+  } else if (scoreRatio >= 0.7) { // %70 - %90 Arası
+    finalMesaj = sonuclar[1] || "Harika İş!";
+    finalGif = quizData.resultData.midHighGif;
+  } else if (scoreRatio >= 0.4) { // %40 - %60 Arası
+    finalMesaj = sonuclar[2] || "Fena Değil...";
+    finalGif = quizData.resultData.midLowGif;
+  } else { // %0 - %30 Arası
+    finalMesaj = sonuclar[3] || "Tam bir hayal kırıklığı...";
+    finalGif = quizData.resultData.lowGif;
+  }
 
   return (
     <div className={darkMode ? "dark" : ""}>
@@ -133,34 +159,24 @@ export default function QuizPage() {
               <img src={quizData.coverGif} alt="Cover" className="w-full h-64 object-cover rounded-2xl mb-8" />
               <button onClick={() => setIsStarted(true)} className="px-12 py-5 bg-blue-600 text-white rounded-xl font-bold text-xl">Start Quiz</button>
             </div>
-            ) : showResult ? (
-              <div className="text-center bg-white dark:bg-[#151515] p-8 rounded-3xl shadow-2xl">
-                <h2 className="text-4xl font-black mb-6">Quiz Tamamlandı!</h2>
-                
-                {/* DİNAMİK GIF: WordPress'ten gelen sonucu gösterir */}
-                <img 
-                  src={quizData.resultData.gif} 
-                  alt="Result" 
-                  className="w-full h-64 object-cover rounded-2xl mb-6" 
-                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                />
-                
-                <p className="text-2xl font-bold mb-4">Skor: {score} / {quizData.questions.length}</p>
-                
-                {/* DİNAMİK MESAJ: WordPress'teki metinleri skora göre gösterir */}
-                <p className="text-lg italic mb-10 text-gray-600 dark:text-gray-300">"{finalMesaj}"</p>
-                
-                <button 
-                  onClick={restartQuiz} 
-                  className="px-8 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
-                >
-                  Tekrar Dene
-                </button>
-              </div>
-            ) : (
+          ) : showResult ? (
+            <div className="text-center bg-white dark:bg-[#151515] p-8 rounded-3xl shadow-2xl">
+              <h2 className="text-4xl font-black mb-6">Quiz Tamamlandı!</h2>
+              
+              <img 
+                src={finalGif} 
+                alt="Result" 
+                className="w-full h-64 object-cover rounded-2xl mb-6" 
+                onError={(e) => (e.currentTarget.style.display = 'none')}
+              />
+              
+              <p className="text-2xl font-bold mb-4">Skor: {score} / {quizData.questions.length}</p>
+              <p className="text-lg italic mb-10 text-gray-600 dark:text-gray-300">"{finalMesaj}"</p>
+              <button onClick={restartQuiz} className="px-8 py-4 bg-gray-200 dark:bg-gray-800 rounded-xl font-bold">Tekrar Dene</button>
+            </div>
+          ) : (
             <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl shadow-lg">
               <div className="mb-4 text-gray-500">Question {currentQuestionIndex + 1} / {quizData.questions.length}</div>
-              
               {currentQuestion.image && (
                 <img 
                   src={currentQuestion.image} 
@@ -169,7 +185,6 @@ export default function QuizPage() {
                   onError={(e) => (e.currentTarget.style.display = 'none')}
                 />
               )}
-              
               <h2 className="text-2xl font-bold mb-8">{currentQuestion.question}</h2>
               <div className="space-y-4">
                 {currentQuestion.options.map((option: any) => {
